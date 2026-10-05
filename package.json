@@ -1,0 +1,23 @@
+{
+  "name": "crypto-tool",
+  "version": "1.0.0",
+  "description": "Simple Cryptography Implementation Web App",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "cryptography",
+    "ciphers",
+    "shift-cipher",
+    "substitution-cipher",
+    "affine-cipher",
+    "vigenere-cipher",
+    "hill-cipher",
+    "permutation-cipher",
+    "one-time-pad"
+  ],
+  "author": "UNS Cryptography Team",
+  "license": "MIT"
+}
