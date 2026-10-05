@@ -3,324 +3,424 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cryptography Tool - Classic Ciphers & File Encryption</title>
+  <title>Cryptography Tool - Technical Laboratory Utility</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-badge">Tugas Kriptografi UNS 2026/2027</div>
-      <h1 class="app-title">CRYPTOGRAPHY TOOL</h1>
-      <p class="app-subtitle">Modern Web Implementation for 7 Classical Cryptosystems & Binary File Processing</p>
-    </header>
 
-    <!-- Global Alert / Status Message -->
-    <div id="alertBox" class="alert" role="alert">
-      <span id="alertIcon">⚠️</span>
-      <div id="alertMessage">Pesan error atau info akan muncul di sini.</div>
-    </div>
-
-    <!-- Main Configuration Card -->
-    <main class="main-card">
-      <div class="section-title">
-        <span class="step-number">1</span>
-        <span>Mode & Algoritma Kriptografi</span>
-      </div>
-
-      <!-- Input Type & Cipher Selection -->
-      <div class="grid-two-cols">
-        <div class="form-group">
-          <label class="form-label" for="inputTypeSelect">
-            Tipe Input (Input Type)
-          </label>
-          <div class="tab-group" id="inputTypeTabs">
-            <button type="button" class="tab-btn active" data-type="text" id="tabText">
-              📝 Text Message
-            </button>
-            <button type="button" class="tab-btn" data-type="file" id="tabFile">
-              📁 File (Text / Binary)
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="cipherSelect">
-            Pilihan Cipher
-            <span class="hint" id="cipherBadge">Modulo 26</span>
-          </label>
-          <select id="cipherSelect" class="form-select">
-            <option value="shift">1. Shift Cipher (Caesar)</option>
-            <option value="substitution">2. Substitution Cipher</option>
-            <option value="affine">3. Affine Cipher</option>
-            <option value="vigenere" selected>4. Vigenere Cipher</option>
-            <option value="hill">5. Hill Cipher</option>
-            <option value="permutation">6. Permutation Cipher</option>
-            <option value="otp">7. One-Time Pad (OTP)</option>
-          </select>
+  <!-- Top Header Bar (Compact 60-75px) -->
+  <header class="header-bar">
+    <div class="container header-content">
+      <div class="brand-group">
+        <div class="brand-icon" aria-hidden="true">🔒</div>
+        <div class="brand-titles">
+          <span class="brand-title">CRYPTOGRAPHY TOOL</span>
+          <span class="brand-subtitle">Web-based cryptography utility &bull; Classical Cryptosystems</span>
         </div>
       </div>
-
-      <!-- Input Data Panel: Text vs File -->
-      <div class="form-group" id="textInputContainer">
-        <label class="form-label" for="textInput">
-          Pesan Input (Input Message)
-          <span class="hint" id="textCharCount">0 karakter</span>
-        </label>
-        <textarea id="textInput" class="form-textarea mono-input" placeholder="Ketik plaintext atau ciphertext di sini (misal: ATTACKATDAWN)...">ATTACKATDAWN</textarea>
-        <div class="helper-row">
-          <button type="button" class="btn btn-outline btn-sm" id="btnSampleText">Contoh Teks</button>
-          <button type="button" class="btn btn-outline btn-sm" id="btnClearText">Bersihkan</button>
-        </div>
-      </div>
-
-      <div class="form-group" id="fileInputContainer" style="display: none;">
-        <label class="form-label">
-          Pilih File (Text atau Binary File)
-          <span class="hint">Byte-by-byte direct processing</span>
-        </label>
-        <div class="dropzone" id="fileDropzone">
-          <input type="file" id="fileInput" style="display: none;">
-          <div class="dropzone-icon">📁</div>
-          <div class="dropzone-text">Klik untuk memilih file atau seret & lepas file ke sini</div>
-          <div class="dropzone-sub">Mendukung semua jenis file: gambar, dokumen, arsip, file .dat / .enc</div>
-        </div>
-        <div class="file-info-badge" id="fileInfoBadge">
-          <div><strong>File:</strong> <span id="fileName">-</span></div>
-          <div><strong>Ukuran:</strong> <span id="fileSize">-</span> | <strong>Tipe:</strong> <span id="fileType">-</span></div>
-        </div>
-      </div>
-
-      <!-- Dynamic Key / Parameter Box -->
-      <div class="param-box">
-        <div class="param-header">
-          <span id="paramBoxTitle">Parameter Kunci (Key)</span>
-          <span class="hint" id="paramBoxHint">Sesuai algoritma yang dipilih</span>
-        </div>
-
-        <!-- Shift Params -->
-        <div id="paramShift" class="param-panel" style="display: none;">
-          <div class="form-group">
-            <label class="form-label" for="shiftKey">Nilai Pergeseran (Shift / k):</label>
-            <input type="number" id="shiftKey" class="form-input" value="3" min="-1000" max="1000">
-            <div class="helper-row">
-              <button type="button" class="btn btn-outline btn-sm" data-shift="3">Caesar (+3)</button>
-              <button type="button" class="btn btn-outline btn-sm" data-shift="13">ROT13 (+13)</button>
-              <button type="button" class="btn btn-outline btn-sm" data-shift="7">Shift 7</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Substitution Params -->
-        <div id="paramSubstitution" class="param-panel" style="display: none;">
-          <div class="form-group">
-            <label class="form-label" for="substitutionKey">
-              26-Huruf Permutasi Alfabet:
-              <span class="hint" id="subKeyLen">26 / 26 huruf unik</span>
-            </label>
-            <input type="text" id="substitutionKey" class="form-input mono-input" value="QWERTYUIOPASDFGHJKLZXCVBNM" maxlength="26">
-            <div class="helper-row">
-              <button type="button" class="btn btn-outline btn-sm" id="btnGenSubKey">Acak Kunci (Random Key)</button>
-              <button type="button" class="btn btn-outline btn-sm" id="btnResetSubKey">Reset ke A-Z</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Affine Params -->
-        <div id="paramAffine" class="param-panel" style="display: none;">
-          <div class="grid-two-cols">
-            <div class="form-group">
-              <label class="form-label" for="affineA">
-                Parameter a (harus coprime terhadap 26):
-              </label>
-              <input type="number" id="affineA" class="form-input" value="7">
-              <span class="hint">Nilai a valid: 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="affineB">Parameter b (pergeseran):</label>
-              <input type="number" id="affineB" class="form-input" value="10">
-            </div>
-          </div>
-        </div>
-
-        <!-- Vigenere Params -->
-        <div id="paramVigenere" class="param-panel">
-          <div class="form-group">
-            <label class="form-label" for="vigenereKey">Kunci Vigenere (Huruf Alfabet, panjang bebas):</label>
-            <input type="text" id="vigenereKey" class="form-input mono-input" value="LEMON" placeholder="Masukkan kata kunci...">
-          </div>
-        </div>
-
-        <!-- Hill Params -->
-        <div id="paramHill" class="param-panel" style="display: none;">
-          <div class="form-group">
-            <label class="form-label">Ukuran Matriks Kunci:</label>
-            <div class="tab-group" style="max-width: 200px;">
-              <button type="button" class="tab-btn active" id="btnHill2x2">2 x 2</button>
-              <button type="button" class="tab-btn" id="btnHill3x3">3 x 3</button>
-            </div>
-          </div>
-
-          <div id="hill2x2Container">
-            <label class="form-label">Elemen Matriks 2x2:</label>
-            <div class="matrix-grid matrix-grid-2">
-              <input type="number" class="form-input matrix-cell" id="hill2_00" value="3">
-              <input type="number" class="form-input matrix-cell" id="hill2_01" value="3">
-              <input type="number" class="form-input matrix-cell" id="hill2_10" value="2">
-              <input type="number" class="form-input matrix-cell" id="hill2_11" value="5">
-            </div>
-          </div>
-
-          <div id="hill3x3Container" style="display: none;">
-            <label class="form-label">Elemen Matriks 3x3:</label>
-            <div class="matrix-grid matrix-grid-3">
-              <input type="number" class="form-input matrix-cell" id="hill3_00" value="6">
-              <input type="number" class="form-input matrix-cell" id="hill3_01" value="24">
-              <input type="number" class="form-input matrix-cell" id="hill3_02" value="1">
-              <input type="number" class="form-input matrix-cell" id="hill3_10" value="13">
-              <input type="number" class="form-input matrix-cell" id="hill3_11" value="16">
-              <input type="number" class="form-input matrix-cell" id="hill3_12" value="10">
-              <input type="number" class="form-input matrix-cell" id="hill3_20" value="20">
-              <input type="number" class="form-input matrix-cell" id="hill3_21" value="17">
-              <input type="number" class="form-input matrix-cell" id="hill3_22" value="15">
-            </div>
-          </div>
-
-          <div class="helper-row">
-            <button type="button" class="btn btn-outline btn-sm" id="btnSampleHillMatrix">Gunakan Contoh Matriks Valid</button>
-            <span class="hint" id="hillDetStatus" style="align-self: center;">det = 9 (gcd = 1, Valid ✅)</span>
-          </div>
-        </div>
-
-        <!-- Permutation Params -->
-        <div id="paramPermutation" class="param-panel" style="display: none;">
-          <div class="form-group">
-            <label class="form-label" for="permutationKey">
-              Kunci Permutasi Posisi Blok (misal: 3 1 4 2 atau 3, 1, 4, 2):
-              <span class="hint" id="permSizeBadge">Ukuran blok: 4</span>
-            </label>
-            <input type="text" id="permutationKey" class="form-input mono-input" value="3 1 4 2" placeholder="Urutan angka 1..m">
-            <div class="helper-row">
-              <button type="button" class="btn btn-outline btn-sm" data-perm="3 1 4 2">Blok 4 (3 1 4 2)</button>
-              <button type="button" class="btn btn-outline btn-sm" data-perm="2 4 1 5 3">Blok 5 (2 4 1 5 3)</button>
-              <button type="button" class="btn btn-outline btn-sm" data-perm="4 2 1 6 3 5">Blok 6 (4 2 1 6 3 5)</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- One-Time Pad Params -->
-        <div id="paramOTP" class="param-panel" style="display: none;">
-          <div class="form-group">
-            <label class="form-label">
-              File Kunci OTP (Key File)
-              <span class="hint">Huruf acak / Stream kunci</span>
-            </label>
-            <input type="file" id="otpKeyFileInput" style="display: none;">
-            <div class="helper-row">
-              <button type="button" class="btn btn-outline btn-sm" id="btnSelectOtpKeyFile">📂 Pilih File Key</button>
-              <button type="button" class="btn btn-outline btn-sm" id="btnGenerateOtpKey">🎲 Bangkitkan & Unduh File Kunci Acak (5000 chars)</button>
-            </div>
-            <div class="file-info-badge show" id="otpKeyInfoBadge" style="margin-top: 10px;">
-              <div><strong>File Kunci:</strong> <span id="otpKeyFileName">Belum ada file kunci</span></div>
-              <div><strong>Panjang Kunci:</strong> <span id="otpKeyLength">0</span> karakter/byte</div>
-              <div><strong>Karakter Digunakan:</strong> <span id="otpCharsUsed">0</span> | <strong>Sisa Kunci:</strong> <span id="otpCharsRemaining">0</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Output Format Selection (Text Mode) -->
-      <div class="form-group" id="formatOptionGroup">
-        <label class="form-label">Format Tampilan Ciphertext:</label>
-        <div class="format-options">
-          <label class="radio-label">
-            <input type="radio" name="outputFormat" value="continuous" checked id="formatContinuous">
-            <span>Tanpa Spasi (Continuous)</span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="outputFormat" value="groups5" id="formatGroups5">
-            <span>Kelompok 5 Huruf (Groups of 5)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Primary Action Buttons -->
-      <div class="action-buttons">
-        <button type="button" class="btn btn-primary" id="btnEncrypt">
-          🔒 Enkripsi (Encrypt)
-        </button>
-        <button type="button" class="btn btn-secondary" id="btnDecrypt">
-          🔓 Dekripsi (Decrypt)
-        </button>
-      </div>
-    </main>
-
-    <!-- Results Section -->
-    <section class="results-card" id="resultsCard">
-      <div class="section-title">
-        <span class="step-number">2</span>
-        <span>Hasil Proses (Result)</span>
-      </div>
-
-      <!-- Result Text Output -->
-      <div id="textResultContainer">
-        <div class="result-block">
-          <label class="form-label">Plaintext / Input yang Diproses:</label>
-          <div class="result-box" id="resultPlaintext">-</div>
-        </div>
-
-        <div class="result-block">
-          <label class="form-label">Ciphertext / Output:</label>
-          <div class="result-box" id="resultCiphertext">-</div>
-        </div>
-
-        <div class="result-actions">
-          <button type="button" class="btn btn-outline btn-sm" id="btnCopyResult">📋 Salin Output (Copy)</button>
-          <button type="button" class="btn btn-outline btn-sm" id="btnDownloadResult">💾 Simpan Output (.txt)</button>
-        </div>
-      </div>
-
-      <!-- Result File Output -->
-      <div id="fileResultContainer" style="display: none;">
-        <div class="result-block">
-          <div class="file-info-badge show">
-            <div><strong>Status Operasi File:</strong> <span id="fileOperationStatus">Siap</span></div>
-            <div><strong>Nama File Output:</strong> <span id="resultFileNameDisplay">-</span></div>
-            <div><strong>Ukuran Output:</strong> <span id="resultFileSizeDisplay">-</span></div>
-          </div>
-        </div>
-
-        <!-- Custom Output Filename for File Decryption -->
-        <div class="form-group" id="customOutputFilenameGroup" style="margin-top: 14px;">
-          <label class="form-label" for="customOutputFilename">
-            Nama File Output untuk Dekripsi:
-            <span class="hint">Nama asli terdeteksi otomatis jika metadata tersedia</span>
-          </label>
-          <input type="text" id="customOutputFilename" class="form-input" placeholder="misal: restored-file.jpg">
-        </div>
-
-        <div class="result-actions" style="margin-top: 14px;">
-          <button type="button" class="btn btn-primary btn-sm" id="btnDownloadProcessedFile">
-            ⬇️ Unduh File Hasil (Download Processed File)
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="app-footer">
       <div>
-        <div class="privacy-badge">
-          <span>🔒</span>
-          <span>All encryption and decryption are processed locally in your browser.</span>
-        </div>
+        <span class="badge-technical">
+          <span class="dot"></span>
+          LOCAL PROCESSING
+        </span>
       </div>
-      <div>Tugas Kriptografi &bull; Program Studi Informatika &bull; Universitas Sebelas Maret</div>
-    </footer>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="main-wrapper">
+    <div class="container">
+
+      <!-- Workspace Panel -->
+      <section class="workspace-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <span>⚙️</span>
+            <span>Cryptography Workspace</span>
+          </h2>
+          <span class="hint-text">Symmetric Ciphers &bull; Text &amp; Binary Processing</span>
+        </div>
+
+        <div class="panel-body">
+          <form id="cryptoForm" onsubmit="return false;">
+            
+            <!-- 1. Input Type -->
+            <div class="form-row">
+              <label class="form-label" for="inputTypeSelect">Input type</label>
+              <div class="form-control-col">
+                <div style="max-width: 260px;">
+                  <select id="inputTypeSelect" class="input-select">
+                    <option value="text" selected>Text</option>
+                    <option value="file">File (Binary / Document)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2A. Input Text (Text Mode) -->
+            <div class="form-row" id="rowInputText">
+              <label class="form-label" for="textInput">
+                Input text
+                <div class="hint-text" id="textCharCount" style="margin-top: 4px; font-weight: normal;">0 chars</div>
+              </label>
+              <div class="form-control-col">
+                <textarea id="textInput" class="textarea-custom font-mono" placeholder="Enter plaintext or ciphertext...">ATTACKATDAWN</textarea>
+                <div class="toolbar-row">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnSampleText">Contoh Teks</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnClearText">Clear</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2B. Input File (File Mode) -->
+            <div class="form-row" id="rowInputFile" style="display: none;">
+              <label class="form-label">Input file</label>
+              <div class="form-control-col">
+                <input type="file" id="fileInput" style="display: none;">
+                <div class="dropzone-box" id="fileDropzone">
+                  <div class="dropzone-prompt">📁 Click to choose file or drag &amp; drop here</div>
+                  <div class="dropzone-subtext">Direct byte-by-byte processing for images, documents, archives, .enc, .dat</div>
+                </div>
+
+                <div id="fileInfoBox" style="display: none;">
+                  <table class="metadata-table">
+                    <tbody>
+                      <tr>
+                        <td class="col-label">File Name</td>
+                        <td class="col-value" id="fileName">-</td>
+                      </tr>
+                      <tr>
+                        <td class="col-label">File Size</td>
+                        <td class="col-value" id="fileSize">-</td>
+                      </tr>
+                      <tr>
+                        <td class="col-label">MIME Type</td>
+                        <td class="col-value" id="fileType">-</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Function (Cipher Selector) -->
+            <div class="form-row">
+              <label class="form-label" for="cipherSelect">Function</label>
+              <div class="form-control-col">
+                <div style="max-width: 360px;">
+                  <select id="cipherSelect" class="input-select">
+                    <option value="shift">Shift Cipher (Caesar)</option>
+                    <option value="substitution">Substitution Cipher</option>
+                    <option value="affine">Affine Cipher</option>
+                    <option value="vigenere" selected>Vigenere Cipher</option>
+                    <option value="hill">Hill Cipher</option>
+                    <option value="permutation">Permutation Cipher</option>
+                    <option value="otp">One-Time Pad</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Dynamic Cipher Configurations -->
+
+            <!-- 4.1 Shift Cipher -->
+            <div class="form-row param-row" id="paramShift" style="display: none;">
+              <label class="form-label" for="shiftKey">Key / Shift</label>
+              <div class="form-control-col">
+                <div style="max-width: 180px;">
+                  <input type="number" id="shiftKey" class="input-text font-mono" value="3">
+                </div>
+                <div class="toolbar-row">
+                  <button type="button" class="btn btn-secondary btn-sm" data-shift="3">Caesar (+3)</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-shift="13">ROT13 (+13)</button>
+                  <span class="hint-text">Value normalized modulo 26 (text) or 256 (binary)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4.2 Substitution Cipher -->
+            <div class="form-row param-row" id="paramSubstitution" style="display: none;">
+              <label class="form-label" for="substitutionKey">Key / Alphabet</label>
+              <div class="form-control-col">
+                <input type="text" id="substitutionKey" class="input-text font-mono" value="QWERTYUIOPASDFGHJKLZXCVBNM" maxlength="26">
+                <div class="toolbar-row">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnGenSubKey">Random Alphabet Key</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnResetSubKey">Reset to A-Z</button>
+                  <span class="hint-text" id="subKeyLen">26 unique alphabet characters</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4.3 Affine Cipher -->
+            <div class="form-row param-row" id="paramAffine" style="display: none;">
+              <label class="form-label">Affine Keys</label>
+              <div class="form-control-col">
+                <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                  <div>
+                    <label for="affineA" class="hint-text" style="display: block; margin-bottom: 2px;">Parameter a</label>
+                    <input type="number" id="affineA" class="input-text font-mono" value="7" style="width: 100px;">
+                  </div>
+                  <div>
+                    <label for="affineB" class="hint-text" style="display: block; margin-bottom: 2px;">Parameter b</label>
+                    <input type="number" id="affineB" class="input-text font-mono" value="10" style="width: 100px;">
+                  </div>
+                </div>
+                <span class="hint-text">Parameter <code>a</code> must be coprime to 26 (e.g. 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25)</span>
+              </div>
+            </div>
+
+            <!-- 4.4 Vigenere Cipher -->
+            <div class="form-row param-row" id="paramVigenere">
+              <label class="form-label" for="vigenereKey">Key</label>
+              <div class="form-control-col">
+                <input type="text" id="vigenereKey" class="input-text font-mono" value="LEMON" placeholder="Enter key string...">
+                <span class="hint-text">Alphabetic characters only. Repeated across message length.</span>
+              </div>
+            </div>
+
+            <!-- 4.5 Hill Cipher -->
+            <div class="form-row param-row" id="paramHill" style="display: none;">
+              <label class="form-label">Key Matrix</label>
+              <div class="form-control-col">
+                <div class="toolbar-row" style="margin-bottom: 8px;">
+                  <label class="hint-text">Matrix size:</label>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnHill2x2" style="font-weight: bold;">2 &times; 2</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnHill3x3">3 &times; 3</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnSampleHillMatrix">Sample Invertible Matrix</button>
+                </div>
+
+                <!-- 2x2 Matrix Grid -->
+                <div id="hill2x2Container">
+                  <div class="matrix-wrapper">
+                    <table class="matrix-table">
+                      <tbody>
+                        <tr>
+                          <td><input type="number" class="matrix-cell-input" id="hill2_00" value="3"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill2_01" value="3"></td>
+                        </tr>
+                        <tr>
+                          <td><input type="number" class="matrix-cell-input" id="hill2_10" value="2"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill2_11" value="5"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 3x3 Matrix Grid -->
+                <div id="hill3x3Container" style="display: none;">
+                  <div class="matrix-wrapper">
+                    <table class="matrix-table">
+                      <tbody>
+                        <tr>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_00" value="6"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_01" value="24"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_02" value="1"></td>
+                        </tr>
+                        <tr>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_10" value="13"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_11" value="16"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_12" value="10"></td>
+                        </tr>
+                        <tr>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_20" value="20"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_21" value="17"></td>
+                          <td><input type="number" class="matrix-cell-input" id="hill3_22" value="15"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <span class="hint-text" id="hillDetStatus">Checking determinant...</span>
+              </div>
+            </div>
+
+            <!-- 4.6 Permutation Cipher -->
+            <div class="form-row param-row" id="paramPermutation" style="display: none;">
+              <label class="form-label" for="permutationKey">Permutation key</label>
+              <div class="form-control-col">
+                <input type="text" id="permutationKey" class="input-text font-mono" value="3 1 4 2" placeholder="e.g. 3 1 4 2">
+                <div class="toolbar-row">
+                  <button type="button" class="btn btn-secondary btn-sm" data-perm="3 1 4 2">Block 4 (3 1 4 2)</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-perm="2 4 1 5 3">Block 5 (2 4 1 5 3)</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-perm="4 2 1 6 3 5">Block 6 (4 2 1 6 3 5)</button>
+                  <span class="hint-text" id="permSizeBadge">Block size: 4</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4.7 One-Time Pad -->
+            <div class="form-row param-row" id="paramOTP" style="display: none;">
+              <label class="form-label">Key file</label>
+              <div class="form-control-col">
+                <input type="file" id="otpKeyFileInput" style="display: none;">
+                <div class="toolbar-row">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnSelectOtpKeyFile">📂 Choose Key File</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnGenerateOtpKey">🎲 Generate &amp; Download Random Key (5000 chars)</button>
+                </div>
+
+                <table class="metadata-table" style="margin-top: 8px;">
+                  <tbody>
+                    <tr>
+                      <td class="col-label">Key File</td>
+                      <td class="col-value" id="otpKeyFileName">No key file loaded</td>
+                    </tr>
+                    <tr>
+                      <td class="col-label">Key Length</td>
+                      <td class="col-value"><span id="otpKeyLength">0</span> characters / bytes</td>
+                    </tr>
+                    <tr>
+                      <td class="col-label">Characters Used</td>
+                      <td class="col-value"><span id="otpCharsUsed">0</span> (Remaining: <span id="otpCharsRemaining">0</span>)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 5. Output Format (Text Mode) -->
+            <div class="form-row" id="rowOutputFormat">
+              <label class="form-label">Ciphertext format</label>
+              <div class="form-control-col">
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="outputFormat" value="continuous" checked id="formatContinuous">
+                    <span>(●) Without spaces</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="outputFormat" value="groups5" id="formatGroups5">
+                    <span>(○) Groups of 5</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Operation Action Buttons -->
+            <div class="form-row" style="margin-top: 10px;">
+              <div class="form-label"></div>
+              <div class="form-control-col">
+                <div class="action-row">
+                  <button type="button" class="btn btn-primary" id="btnEncrypt">
+                    <span>Encrypt</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="btnDecrypt">
+                    <span>Decrypt</span>
+                  </button>
+                </div>
+
+                <!-- Inline Status Bar -->
+                <div id="statusBar" class="status-bar status-ready">
+                  <span id="statusIcon">ℹ️</span>
+                  <span id="statusMessage">Ready. Choose cipher and parameters, then click Encrypt or Decrypt.</span>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </section>
+
+      <!-- Result Panel -->
+      <section class="workspace-panel" id="resultPanel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <span>📊</span>
+            <span>Result</span>
+          </h2>
+          <span class="hint-text" id="resultOperationLabel">Output Data Viewer</span>
+        </div>
+
+        <div class="panel-body">
+          <!-- Text Mode Results -->
+          <div id="textResultSection">
+            <div style="margin-bottom: 14px;">
+              <label class="hint-text" style="font-weight: 600; display: block; margin-bottom: 4px;">Plaintext / Input:</label>
+              <div class="result-box font-mono" id="resultPlaintext">-</div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label class="hint-text" style="font-weight: 600; display: block; margin-bottom: 4px;">Ciphertext / Output:</label>
+              <div class="result-box font-mono" id="resultCiphertext">-</div>
+            </div>
+
+            <div class="result-footer-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnCopyResult">📋 Copy</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadResult">💾 Download (.txt)</button>
+            </div>
+          </div>
+
+          <!-- File Mode Results -->
+          <div id="fileResultSection" style="display: none;">
+            <table class="metadata-table">
+              <tbody>
+                <tr>
+                  <td class="col-label">Operation Status</td>
+                  <td class="col-value" id="fileOperationStatus">Ready</td>
+                </tr>
+                <tr>
+                  <td class="col-label">Output Filename</td>
+                  <td class="col-value" id="resultFileNameDisplay">-</td>
+                </tr>
+                <tr>
+                  <td class="col-label">Output Size</td>
+                  <td class="col-value" id="resultFileSizeDisplay">-</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top: 12px;" id="customOutputFilenameGroup">
+              <label for="customOutputFilename" class="hint-text" style="font-weight: 600; display: block; margin-bottom: 4px;">
+                Restored Output Filename (for Decryption):
+              </label>
+              <div style="max-width: 360px;">
+                <input type="text" id="customOutputFilename" class="input-text font-mono" placeholder="restored_image.jpg">
+              </div>
+            </div>
+
+            <!-- Optional Hex Preview -->
+            <div style="margin-top: 14px;" id="hexPreviewBox">
+              <label class="hint-text" style="font-weight: 600; display: block; margin-bottom: 2px;">Hex Preview (first 128 bytes):</label>
+              <div class="hex-box font-mono" id="hexPreviewContent">No file processed yet.</div>
+            </div>
+
+            <div class="result-footer-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="btnDownloadProcessedFile">
+                ⬇️ Download Result File
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Expandable Help / Documentation Section -->
+      <details class="cipher-doc" id="cipherDocDetails">
+        <summary>
+          <span>▸</span>
+          <span id="docTitleSummary">How does Vigenere Cipher work?</span>
+        </summary>
+        <div class="cipher-doc-content" id="docContent">
+          <!-- Populated dynamically via JS -->
+          <p><strong>Vigenere Cipher</strong> adalah kriptosistem polialfabetik yang menggunakan kunci berulang.</p>
+          <p>Rumus Enkripsi: <code>Cᵢ = (Pᵢ + Kᵢ) mod 26</code></p>
+          <p>Rumus Dekripsi: <code>Pᵢ = (Cᵢ - Kᵢ + 26) mod 26</code></p>
+          <p>Hanya karakter alfabet A-Z yang dienkripsi. Angka, spasi, dan tanda baca diabaikan pada output.</p>
+        </div>
+      </details>
+
+    </div>
   </div>
 
-  <!-- Application Controller -->
+  <!-- Page Footer -->
+  <footer class="page-footer">
+    <div class="container">
+      <div>Local processing &bull; No data uploaded to server &bull; Tugas Mata Kuliah Kriptografi UNS 2026/2027</div>
+    </div>
+  </footer>
+
+  <!-- Script Controller -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

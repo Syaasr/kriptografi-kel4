@@ -1,5 +1,6 @@
 /**
  * Main Controller for Web Cryptography Tool
+ * Technical Utility & Laboratory Pattern (Online Domain Tools inspired)
  */
 import { ShiftCipher } from './ciphers/shift.js';
 import { SubstitutionCipher } from './ciphers/substitution.js';
@@ -38,6 +39,70 @@ const ciphers = {
   otp: new OneTimePadCipher()
 };
 
+// Documentation information for each cipher
+const cipherDocs = {
+  shift: {
+    title: 'How does Shift Cipher work?',
+    html: `
+      <p><strong>Shift Cipher (Caesar Cipher)</strong> menggeser setiap karakter alfabet sejauh nilai kunci <code>k</code>.</p>
+      <p>Rumus Enkripsi: <code>Cᵢ = (Pᵢ + k) mod 26</code></p>
+      <p>Rumus Dekripsi: <code>Pᵢ = (Cᵢ - k) mod 26</code></p>
+      <p>Untuk file biner, pergeseran dilakukan byte-by-byte modulo 256: <code>C = (B + k) mod 256</code>.</p>
+    `
+  },
+  substitution: {
+    title: 'How does Substitution Cipher work?',
+    html: `
+      <p><strong>Substitution Cipher</strong> memetakan setiap huruf A-Z ke permutasi 26 huruf alfabet yang unik.</p>
+      <p>Enkripsi: <code>Cᵢ = Key[Pᵢ]</code> | Dekripsi: <code>Pᵢ = Alphabet[Key.indexOf(Cᵢ)]</code></p>
+      <p>Untuk mode biner, kunci menghasilkan tabel S-Box 256-byte dan invers S-Box yang bijektif.</p>
+    `
+  },
+  affine: {
+    title: 'How does Affine Cipher work?',
+    html: `
+      <p><strong>Affine Cipher</strong> menggabungkan operasi perkalian dan pergeseran linear.</p>
+      <p>Rumus Enkripsi: <code>Cᵢ = (a · Pᵢ + b) mod 26</code></p>
+      <p>Rumus Dekripsi: <code>Pᵢ = a⁻¹ · (Cᵢ - b) mod 26</code></p>
+      <p>Syarat Matematis: <code>gcd(a, 26) = 1</code>. Nilai <code>a</code> yang valid: 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25.</p>
+    `
+  },
+  vigenere: {
+    title: 'How does Vigenere Cipher work?',
+    html: `
+      <p><strong>Vigenere Cipher</strong> adalah kriptosistem polialfabetik dengan kunci kata yang diulang sepanjang teks.</p>
+      <p>Rumus Enkripsi: <code>Cᵢ = (Pᵢ + Kᵢ) mod 26</code></p>
+      <p>Rumus Dekripsi: <code>Pᵢ = (Cᵢ - Kᵢ + 26) mod 26</code></p>
+      <p>Khusus tugas ini: hanya karakter alfabet A-Z yang dienkripsi. Angka, spasi, dan tanda baca diabaikan pada output.</p>
+    `
+  },
+  hill: {
+    title: 'How does Hill Cipher work?',
+    html: `
+      <p><strong>Hill Cipher</strong> mengenkripsi blok karakter menggunakan perkalian matriks modulo 26.</p>
+      <p>Rumus Enkripsi: <code>C = (K · P) mod 26</code></p>
+      <p>Rumus Dekripsi: <code>P = (K⁻¹ · C) mod 26</code></p>
+      <p>Syarat Invertibilitas: <code>gcd(det(K), 26) = 1</code>. Jika panjang teks bukan kelipatan blok, teks otomatis dipadding dengan 'X'.</p>
+    `
+  },
+  permutation: {
+    title: 'How does Permutation Cipher work?',
+    html: `
+      <p><strong>Permutation Cipher (Transposisi Blok)</strong> mengubah posisi urutan karakter dalam setiap blok.</p>
+      <p>Kunci menyatakan urutan indeks permutasi (misal: <code>3 1 4 2</code>).</p>
+      <p>Enkripsi: <code>C[j] = P[π[j]]</code> | Dekripsi menggunakan invers permutasi: <code>P[k] = C[π⁻¹[k]]</code>.</p>
+    `
+  },
+  otp: {
+    title: 'How does One-Time Pad work?',
+    html: `
+      <p><strong>One-Time Pad (OTP)</strong> menggunakan kunci acak dari file yang panjangnya &ge; panjang pesan.</p>
+      <p>Rumus Enkripsi: <code>Cᵢ = (Pᵢ + Kᵢ) mod 26</code> | Dekripsi: <code>Pᵢ = (Cᵢ - Kᵢ + 26) mod 26</code></p>
+      <p>Kunci yang digunakan hanya sepanjang pesan yang diproses, sisa kunci tidak digunakan.</p>
+    `
+  }
+};
+
 // Application State
 const state = {
   inputType: 'text', // 'text' | 'file'
@@ -51,7 +116,7 @@ const state = {
   outputFilename: '',
 
   // OTP key file state
-  otpKeyData: null, // string for text, Uint8Array for binary
+  otpKeyData: null,
   otpKeyFilename: '',
 
   // Text mode result cache
@@ -62,30 +127,27 @@ const state = {
 
 // DOM Elements
 const elements = {
-  alertBox: document.getElementById('alertBox'),
-  alertMessage: document.getElementById('alertMessage'),
-  tabText: document.getElementById('tabText'),
-  tabFile: document.getElementById('tabFile'),
+  inputTypeSelect: document.getElementById('inputTypeSelect'),
+  rowInputText: document.getElementById('rowInputText'),
+  rowInputFile: document.getElementById('rowInputFile'),
+  rowOutputFormat: document.getElementById('rowOutputFormat'),
   cipherSelect: document.getElementById('cipherSelect'),
-  cipherBadge: document.getElementById('cipherBadge'),
 
   // Text inputs
-  textInputContainer: document.getElementById('textInputContainer'),
   textInput: document.getElementById('textInput'),
   textCharCount: document.getElementById('textCharCount'),
   btnSampleText: document.getElementById('btnSampleText'),
   btnClearText: document.getElementById('btnClearText'),
 
   // File inputs
-  fileInputContainer: document.getElementById('fileInputContainer'),
-  fileDropzone: document.getElementById('fileDropzone'),
   fileInput: document.getElementById('fileInput'),
-  fileInfoBadge: document.getElementById('fileInfoBadge'),
+  fileDropzone: document.getElementById('fileDropzone'),
+  fileInfoBox: document.getElementById('fileInfoBox'),
   fileName: document.getElementById('fileName'),
   fileSize: document.getElementById('fileSize'),
   fileType: document.getElementById('fileType'),
 
-  // Parameter panels
+  // Parameter rows
   paramPanels: {
     shift: document.getElementById('paramShift'),
     substitution: document.getElementById('paramSubstitution'),
@@ -126,18 +188,22 @@ const elements = {
   otpCharsUsed: document.getElementById('otpCharsUsed'),
   otpCharsRemaining: document.getElementById('otpCharsRemaining'),
 
-  // Format options
-  formatOptionGroup: document.getElementById('formatOptionGroup'),
+  // Format Radios
   formatContinuous: document.getElementById('formatContinuous'),
   formatGroups5: document.getElementById('formatGroups5'),
 
-  // Action buttons
+  // Action Buttons
   btnEncrypt: document.getElementById('btnEncrypt'),
   btnDecrypt: document.getElementById('btnDecrypt'),
 
-  // Result displays
-  textResultContainer: document.getElementById('textResultContainer'),
-  fileResultContainer: document.getElementById('fileResultContainer'),
+  // Status Bar
+  statusBar: document.getElementById('statusBar'),
+  statusIcon: document.getElementById('statusIcon'),
+  statusMessage: document.getElementById('statusMessage'),
+
+  // Result Sections
+  textResultSection: document.getElementById('textResultSection'),
+  fileResultSection: document.getElementById('fileResultSection'),
   resultPlaintext: document.getElementById('resultPlaintext'),
   resultCiphertext: document.getElementById('resultCiphertext'),
   btnCopyResult: document.getElementById('btnCopyResult'),
@@ -147,23 +213,32 @@ const elements = {
   resultFileNameDisplay: document.getElementById('resultFileNameDisplay'),
   resultFileSizeDisplay: document.getElementById('resultFileSizeDisplay'),
   customOutputFilename: document.getElementById('customOutputFilename'),
-  btnDownloadProcessedFile: document.getElementById('btnDownloadProcessedFile')
+  hexPreviewContent: document.getElementById('hexPreviewContent'),
+  btnDownloadProcessedFile: document.getElementById('btnDownloadProcessedFile'),
+
+  // Expandable Documentation
+  docTitleSummary: document.getElementById('docTitleSummary'),
+  docContent: document.getElementById('docContent')
 };
 
 let hillCurrentDim = 2;
 
-// Utility functions
-function showAlert(message, type = 'error') {
-  elements.alertBox.className = `alert alert-${type} show`;
-  elements.alertMessage.textContent = message;
-  elements.alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+// Utility: Status Bar message
+function setStatus(message, type = 'ready') {
+  elements.statusBar.className = `status-bar status-${type}`;
+  if (type === 'success') {
+    elements.statusIcon.textContent = '✓';
+  } else if (type === 'error') {
+    elements.statusIcon.textContent = '✕';
+  } else if (type === 'info') {
+    elements.statusIcon.textContent = 'ℹ️';
+  } else {
+    elements.statusIcon.textContent = 'ℹ️';
+  }
+  elements.statusMessage.textContent = message;
 }
 
-function clearAlert() {
-  elements.alertBox.className = 'alert';
-  elements.alertMessage.textContent = '';
-}
-
+// Utility: Format byte size
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -172,37 +247,103 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Utility: Generate Hex Preview for binary data
+function generateHexPreview(bytes, maxBytes = 128) {
+  if (!bytes || bytes.length === 0) return 'No data available.';
+  const len = Math.min(bytes.length, maxBytes);
+  let output = '';
+  for (let i = 0; i < len; i += 16) {
+    const offset = i.toString(16).padStart(8, '0');
+    let hexPart = '';
+    let asciiPart = '';
+    for (let j = 0; j < 16; j++) {
+      if (i + j < len) {
+        const b = bytes[i + j];
+        hexPart += b.toString(16).padStart(2, '0').toUpperCase() + ' ';
+        asciiPart += (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
+      } else {
+        hexPart += '   ';
+      }
+    }
+    output += `${offset}  ${hexPart} |${asciiPart}|\n`;
+  }
+  if (bytes.length > maxBytes) {
+    output += `... (${bytes.length - maxBytes} more bytes hidden in preview)`;
+  }
+  return output;
+}
+
 // Switch Input Type (Text vs File)
 function setInputType(type) {
   state.inputType = type;
+  elements.inputTypeSelect.value = type;
   if (type === 'text') {
-    elements.tabText.classList.add('active');
-    elements.tabFile.classList.remove('active');
-    elements.textInputContainer.style.display = 'flex';
-    elements.fileInputContainer.style.display = 'none';
-    elements.formatOptionGroup.style.display = 'flex';
-    elements.textResultContainer.style.display = 'block';
-    elements.fileResultContainer.style.display = 'none';
+    elements.rowInputText.style.display = 'grid';
+    elements.rowInputFile.style.display = 'none';
+    elements.rowOutputFormat.style.display = 'grid';
+    elements.textResultSection.style.display = 'block';
+    elements.fileResultSection.style.display = 'none';
   } else {
-    elements.tabText.classList.remove('active');
-    elements.tabFile.classList.add('active');
-    elements.textInputContainer.style.display = 'none';
-    elements.fileInputContainer.style.display = 'block';
-    elements.formatOptionGroup.style.display = 'none';
-    elements.textResultContainer.style.display = 'none';
-    elements.fileResultContainer.style.display = 'block';
+    elements.rowInputText.style.display = 'none';
+    elements.rowInputFile.style.display = 'grid';
+    elements.rowOutputFormat.style.display = 'none';
+    elements.textResultSection.style.display = 'none';
+    elements.fileResultSection.style.display = 'block';
   }
-  clearAlert();
+  setStatus('Ready. Select parameters and click Encrypt or Decrypt.', 'ready');
 }
 
 // Switch Active Cipher
 function setCipher(cipherId) {
   state.selectedCipher = cipherId;
   for (const [id, panel] of Object.entries(elements.paramPanels)) {
-    panel.style.display = id === cipherId ? 'block' : 'none';
+    panel.style.display = id === cipherId ? 'grid' : 'none';
   }
-  elements.cipherBadge.textContent = cipherId === 'otp' ? 'Stream / Pad' : 'Modulo 26';
-  clearAlert();
+
+  // Update expandable documentation
+  const doc = cipherDocs[cipherId];
+  if (doc) {
+    elements.docTitleSummary.textContent = doc.title;
+    elements.docContent.innerHTML = doc.html;
+  }
+  setStatus(`Selected: ${ciphers[cipherId]?.name || cipherId}. Ready for operation.`, 'ready');
+}
+
+// Matrix helper: Read values from DOM
+function getHillMatrix(dim = hillCurrentDim) {
+  if (dim === 2) {
+    return [
+      [Number(document.getElementById('hill2_00')?.value || 0), Number(document.getElementById('hill2_01')?.value || 0)],
+      [Number(document.getElementById('hill2_10')?.value || 0), Number(document.getElementById('hill2_11')?.value || 0)]
+    ];
+  } else {
+    return [
+      [Number(document.getElementById('hill3_00')?.value || 0), Number(document.getElementById('hill3_01')?.value || 0), Number(document.getElementById('hill3_02')?.value || 0)],
+      [Number(document.getElementById('hill3_10')?.value || 0), Number(document.getElementById('hill3_11')?.value || 0), Number(document.getElementById('hill3_12')?.value || 0)],
+      [Number(document.getElementById('hill3_20')?.value || 0), Number(document.getElementById('hill3_21')?.value || 0), Number(document.getElementById('hill3_22')?.value || 0)]
+    ];
+  }
+}
+
+// Matrix helper: Update determinant status
+function updateHillMatrixStatus() {
+  try {
+    const matrix = getHillMatrix(hillCurrentDim);
+    const det = matrixDeterminant(matrix);
+    const detMod = mod(det, 26);
+    const g = gcd(detMod, 26);
+
+    if (g === 1) {
+      elements.hillDetStatus.textContent = `det = ${det} (mod 26 = ${detMod}, gcd = 1, Invertible ✓)`;
+      elements.hillDetStatus.style.color = '#15803d';
+    } else {
+      elements.hillDetStatus.textContent = `det = ${det} (mod 26 = ${detMod}, gcd = ${g}, Not Invertible ✕)`;
+      elements.hillDetStatus.style.color = '#dc2626';
+    }
+  } catch (e) {
+    elements.hillDetStatus.textContent = `Error: ${e.message}`;
+    elements.hillDetStatus.style.color = '#dc2626';
+  }
 }
 
 // Collect Parameters for Selected Cipher
@@ -233,12 +374,12 @@ function collectParameters() {
     }
     case 'otp': {
       if (!state.otpKeyData) {
-        throw new Error('Silakan pilih file kunci OTP terlebih dahulu menggunakan tombol [Pilih File Key].');
+        throw new Error('Please choose an OTP key file using [Choose Key File] button first.');
       }
       return { key: state.otpKeyData };
     }
     default:
-      throw new Error(`Cipher ${cipherId} tidak dikenal.`);
+      throw new Error(`Cipher ${cipherId} not recognized.`);
   }
 }
 
@@ -247,19 +388,18 @@ function renderTextResult(plaintext, ciphertextRaw) {
   state.lastPlaintext = plaintext;
   state.lastCiphertextRaw = ciphertextRaw;
 
-  elements.resultPlaintext.textContent = plaintext || '(kosong)';
+  elements.resultPlaintext.textContent = plaintext || '(empty)';
   const formatted = state.outputFormat === 'groups5'
     ? formatGroupsOf5(ciphertextRaw)
     : formatContinuous(ciphertextRaw);
-  elements.resultCiphertext.textContent = formatted || '(kosong)';
+  elements.resultCiphertext.textContent = formatted || '(empty)';
 }
 
 // Handle Text Encryption / Decryption
 function handleTextOperation(isEncrypt) {
-  clearAlert();
   const inputMessage = elements.textInput.value;
   if (!inputMessage.trim()) {
-    showAlert('Pesan input tidak boleh kosong. Ketik pesan Anda terlebih dahulu.');
+    setStatus('Input message cannot be empty.', 'error');
     return;
   }
 
@@ -277,7 +417,7 @@ function handleTextOperation(isEncrypt) {
         const ciphertext = cipher.encryptText(inputMessage, options);
         renderTextResult(cleanAlphabet(inputMessage), ciphertext);
       }
-      showAlert('Enkripsi teks berhasil diselesaikan.', 'success');
+      setStatus('Encryption completed successfully.', 'success');
     } else {
       if (state.selectedCipher === 'otp') {
         const res = cipher.decryptText(inputMessage, options);
@@ -288,18 +428,17 @@ function handleTextOperation(isEncrypt) {
         const decrypted = cipher.decryptText(inputMessage, options);
         renderTextResult(decrypted, cleanAlphabet(inputMessage));
       }
-      showAlert('Dekripsi teks berhasil diselesaikan.', 'success');
+      setStatus('Decryption completed successfully.', 'success');
     }
   } catch (err) {
-    showAlert(err.message || 'Terjadi kesalahan saat memproses teks.');
+    setStatus(err.message || 'Error processing text.', 'error');
   }
 }
 
 // Handle File Encryption / Decryption
 async function handleFileOperation(isEncrypt) {
-  clearAlert();
   if (!state.selectedFile || !state.selectedFileBytes) {
-    showAlert('File belum dipilih. Silakan pilih atau seret file ke area dropzone.');
+    setStatus('No file selected. Please choose or drag a file to the dropzone.', 'error');
     return;
   }
 
@@ -319,19 +458,19 @@ async function handleFileOperation(isEncrypt) {
         cipherBytes = cipher.encryptBytes(state.selectedFileBytes, options);
       }
 
-      // Pack into metadata-preserving container
+      // Pack into metadata container
       const container = packEncryptedContainer(cipher.id, state.selectedFile.name, cipherBytes);
       state.processedFileBytes = container;
       state.outputFilename = `${state.selectedFile.name}.enc`;
 
-      elements.fileOperationStatus.textContent = 'Enkripsi Berhasil Diselesaikan ✅';
+      elements.fileOperationStatus.textContent = 'Encryption Completed Successfully ✓';
       elements.resultFileNameDisplay.textContent = state.outputFilename;
       elements.resultFileSizeDisplay.textContent = formatBytes(container.byteLength);
+      elements.hexPreviewContent.textContent = generateHexPreview(container);
 
-      showAlert(`File "${state.selectedFile.name}" berhasil dienkripsi! Klik tombol unduh di bawah.`, 'success');
+      setStatus(`File "${state.selectedFile.name}" encrypted successfully (${formatBytes(container.byteLength)}). Ready for download.`, 'success');
     } else {
       // Binary Decryption
-      // Check if file is container format
       const unpacked = unpackEncryptedContainer(state.selectedFileBytes, state.selectedFile.name.replace(/\.enc$/i, ''));
       
       let decryptedBytes;
@@ -349,59 +488,24 @@ async function handleFileOperation(isEncrypt) {
       state.outputFilename = targetFilename;
       elements.customOutputFilename.value = targetFilename;
 
-      elements.fileOperationStatus.textContent = 'Dekripsi Berhasil Diselesaikan ✅';
+      elements.fileOperationStatus.textContent = 'Decryption Completed Successfully ✓';
       elements.resultFileNameDisplay.textContent = targetFilename;
       elements.resultFileSizeDisplay.textContent = formatBytes(decryptedBytes.byteLength);
+      elements.hexPreviewContent.textContent = generateHexPreview(decryptedBytes);
 
-      showAlert(`File berhasil didekripsi menjadi "${targetFilename}" (${formatBytes(decryptedBytes.byteLength)}). Siap diunduh!`, 'success');
+      setStatus(`File decrypted successfully into "${targetFilename}" (${formatBytes(decryptedBytes.byteLength)}). Ready for download.`, 'success');
     }
   } catch (err) {
-    showAlert(err.message || 'Terjadi kesalahan saat memproses file.');
+    setStatus(err.message || 'Error processing file.', 'error');
   }
 }
 
-// Matrix Helpers
-function getHillMatrix(dim = hillCurrentDim) {
-  if (dim === 2) {
-    return [
-      [Number(document.getElementById('hill2_00')?.value || 0), Number(document.getElementById('hill2_01')?.value || 0)],
-      [Number(document.getElementById('hill2_10')?.value || 0), Number(document.getElementById('hill2_11')?.value || 0)]
-    ];
-  } else {
-    return [
-      [Number(document.getElementById('hill3_00')?.value || 0), Number(document.getElementById('hill3_01')?.value || 0), Number(document.getElementById('hill3_02')?.value || 0)],
-      [Number(document.getElementById('hill3_10')?.value || 0), Number(document.getElementById('hill3_11')?.value || 0), Number(document.getElementById('hill3_12')?.value || 0)],
-      [Number(document.getElementById('hill3_20')?.value || 0), Number(document.getElementById('hill3_21')?.value || 0), Number(document.getElementById('hill3_22')?.value || 0)]
-    ];
-  }
-}
-
-// Matrix Determinant & UI Update
-function updateHillMatrixStatus() {
-  try {
-    const matrix = getHillMatrix(hillCurrentDim);
-    const det = matrixDeterminant(matrix);
-    const detMod = mod(det, 26);
-    const g = gcd(detMod, 26);
-
-    if (g === 1) {
-      elements.hillDetStatus.textContent = `det = ${det} (mod 26 = ${detMod}, gcd = 1, Invertible ✅)`;
-      elements.hillDetStatus.style.color = '#34d399';
-    } else {
-      elements.hillDetStatus.textContent = `det = ${det} (mod 26 = ${detMod}, gcd = ${g}, TIDAK Memiliki Inverse ❌)`;
-      elements.hillDetStatus.style.color = '#f87171';
-    }
-  } catch (e) {
-    elements.hillDetStatus.textContent = `Error: ${e.message}`;
-    elements.hillDetStatus.style.color = '#f87171';
-  }
-}
-
-// Set up Event Listeners
+// Set up UI Event Listeners
 function setupEventListeners() {
-  // Input Type Tabs
-  elements.tabText.addEventListener('click', () => setInputType('text'));
-  elements.tabFile.addEventListener('click', () => setInputType('file'));
+  // Input type dropdown
+  elements.inputTypeSelect.addEventListener('change', (e) => {
+    setInputType(e.target.value);
+  });
 
   // Cipher selection dropdown
   elements.cipherSelect.addEventListener('change', (e) => {
@@ -410,21 +514,21 @@ function setupEventListeners() {
 
   // Text character count listener
   elements.textInput.addEventListener('input', () => {
-    elements.textCharCount.textContent = `${elements.textInput.value.length} karakter`;
+    elements.textCharCount.textContent = `${elements.textInput.value.length} chars`;
   });
 
   // Sample and Clear Text buttons
   elements.btnSampleText.addEventListener('click', () => {
     elements.textInput.value = 'ATTACKATDAWN';
-    elements.textCharCount.textContent = `${elements.textInput.value.length} karakter`;
+    elements.textCharCount.textContent = `${elements.textInput.value.length} chars`;
   });
 
   elements.btnClearText.addEventListener('click', () => {
     elements.textInput.value = '';
-    elements.textCharCount.textContent = '0 karakter';
+    elements.textCharCount.textContent = '0 chars';
     elements.resultPlaintext.textContent = '-';
     elements.resultCiphertext.textContent = '-';
-    clearAlert();
+    setStatus('Text input cleared.', 'ready');
   });
 
   // Format Radio toggles
@@ -453,26 +557,26 @@ function setupEventListeners() {
     }
     const shuffled = letters.join('');
     elements.substitutionKey.value = shuffled;
-    elements.subKeyLen.textContent = '26 / 26 huruf unik ✅';
+    elements.subKeyLen.textContent = '26 unique alphabet characters ✓';
   });
 
   elements.btnResetSubKey.addEventListener('click', () => {
     elements.substitutionKey.value = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    elements.subKeyLen.textContent = '26 / 26 huruf unik ✅';
+    elements.subKeyLen.textContent = '26 unique alphabet characters ✓';
   });
 
   elements.substitutionKey.addEventListener('input', (e) => {
     const clean = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
     e.target.value = clean;
     const set = new Set(clean);
-    elements.subKeyLen.textContent = `${clean.length}/26 huruf (${set.size} unik)`;
+    elements.subKeyLen.textContent = `${clean.length}/26 characters (${set.size} unique)`;
   });
 
   // Hill Cipher Dimension Toggles
   elements.btnHill2x2.addEventListener('click', () => {
     hillCurrentDim = 2;
-    elements.btnHill2x2.classList.add('active');
-    elements.btnHill3x3.classList.remove('active');
+    elements.btnHill2x2.style.fontWeight = 'bold';
+    elements.btnHill3x3.style.fontWeight = 'normal';
     elements.hill2x2Container.style.display = 'block';
     elements.hill3x3Container.style.display = 'none';
     updateHillMatrixStatus();
@@ -480,8 +584,8 @@ function setupEventListeners() {
 
   elements.btnHill3x3.addEventListener('click', () => {
     hillCurrentDim = 3;
-    elements.btnHill2x2.classList.remove('active');
-    elements.btnHill3x3.classList.add('active');
+    elements.btnHill2x2.style.fontWeight = 'normal';
+    elements.btnHill3x3.style.fontWeight = 'bold';
     elements.hill2x2Container.style.display = 'none';
     elements.hill3x3Container.style.display = 'block';
     updateHillMatrixStatus();
@@ -508,7 +612,7 @@ function setupEventListeners() {
   });
 
   // Monitor Hill input changes
-  document.querySelectorAll('.matrix-cell').forEach((cell) => {
+  document.querySelectorAll('.matrix-cell-input').forEach((cell) => {
     cell.addEventListener('input', updateHillMatrixStatus);
   });
 
@@ -518,7 +622,7 @@ function setupEventListeners() {
       const val = e.target.getAttribute('data-perm');
       elements.permutationKey.value = val;
       const count = val.split(' ').length;
-      elements.permSizeBadge.textContent = `Ukuran blok: ${count}`;
+      elements.permSizeBadge.textContent = `Block size: ${count}`;
     });
   });
 
@@ -553,24 +657,24 @@ function setupEventListeners() {
   async function processSelectedFile(file) {
     state.selectedFile = file;
     elements.fileName.textContent = file.name;
-    elements.fileSize.textContent = formatBytes(file.size);
-    elements.fileType.textContent = file.type || 'Binary / Unspecified';
-    elements.fileInfoBadge.classList.add('show');
+    elements.fileSize.textContent = `${formatBytes(file.size)} (${file.size.toLocaleString()} bytes)`;
+    elements.fileType.textContent = file.type || 'application/octet-stream';
+    elements.fileInfoBox.style.display = 'block';
 
     try {
       const buffer = await readFileAsArrayBuffer(file);
       state.selectedFileBytes = new Uint8Array(buffer);
       
-      // If encrypted container, auto-suggest restored filename
       const unpacked = unpackEncryptedContainer(state.selectedFileBytes, file.name.replace(/\.enc$/i, ''));
       if (unpacked.hasMetadata) {
         elements.customOutputFilename.value = unpacked.originalFilename;
-        showAlert(`File container terdeteksi! Nama file asli: "${unpacked.originalFilename}".`, 'info');
+        setStatus(`Encrypted container detected. Original filename: "${unpacked.originalFilename}".`, 'info');
       } else {
         elements.customOutputFilename.value = file.name.replace(/\.enc$/i, '');
+        setStatus(`File "${file.name}" loaded (${formatBytes(file.size)}). Ready for operation.`, 'ready');
       }
     } catch (err) {
-      showAlert(`Gagal membaca file: ${err.message}`);
+      setStatus(`Failed reading file: ${err.message}`, 'error');
     }
   }
 
@@ -586,17 +690,16 @@ function setupEventListeners() {
       try {
         const text = await readFileAsText(file);
         const buffer = await readFileAsArrayBuffer(file);
-        // Clean alphabet letters for text mode
         state.otpKeyData = state.inputType === 'text' ? cleanAlphabet(text) : new Uint8Array(buffer);
         const len = state.inputType === 'text' ? state.otpKeyData.length : buffer.byteLength;
 
         elements.otpKeyFileName.textContent = file.name;
-        elements.otpKeyLength.textContent = len;
+        elements.otpKeyLength.textContent = len.toLocaleString();
         elements.otpCharsUsed.textContent = '0';
-        elements.otpCharsRemaining.textContent = len;
-        showAlert(`File kunci OTP "${file.name}" berhasil dimuat (${len} karakter/byte).`, 'success');
+        elements.otpCharsRemaining.textContent = len.toLocaleString();
+        setStatus(`OTP key file "${file.name}" loaded successfully (${len.toLocaleString()} characters/bytes).`, 'success');
       } catch (err) {
-        showAlert(`Gagal membaca file key OTP: ${err.message}`);
+        setStatus(`Failed reading OTP key file: ${err.message}`, 'error');
       }
     }
   });
@@ -604,10 +707,10 @@ function setupEventListeners() {
   elements.btnGenerateOtpKey.addEventListener('click', () => {
     const key = generateRandomKey(5000);
     downloadFile(key, 'otp_random_key_5000.txt', 'text/plain');
-    showAlert('File kunci acak OTP 5000 huruf telah diunduh! Gunakan file tersebut sebagai file kunci.', 'info');
+    setStatus('Generated and downloaded 5,000-character random OTP key file.', 'info');
   });
 
-  // Action Buttons
+  // Action Buttons (Encrypt / Decrypt)
   elements.btnEncrypt.addEventListener('click', () => {
     if (state.inputType === 'text') {
       handleTextOperation(true);
@@ -624,50 +727,53 @@ function setupEventListeners() {
     }
   });
 
-  // Result Actions
+  // Result Actions (Copy & Download)
   elements.btnCopyResult.addEventListener('click', async () => {
     const textToCopy = elements.resultCiphertext.textContent;
-    if (!textToCopy || textToCopy === '(kosong)' || textToCopy === '-') {
-      showAlert('Belum ada output untuk disalin.');
+    if (!textToCopy || textToCopy === '(empty)' || textToCopy === '-') {
+      setStatus('No output available to copy.', 'error');
       return;
     }
     try {
       await navigator.clipboard.writeText(textToCopy);
       const originalText = elements.btnCopyResult.textContent;
-      elements.btnCopyResult.textContent = '✅ Tersalin!';
+      elements.btnCopyResult.textContent = '✓ Copied!';
       setTimeout(() => {
         elements.btnCopyResult.textContent = originalText;
       }, 2000);
+      setStatus('Ciphertext copied to clipboard.', 'success');
     } catch {
-      showAlert('Gagal menyalin ke clipboard.');
+      setStatus('Failed to copy to clipboard.', 'error');
     }
   });
 
   elements.btnDownloadResult.addEventListener('click', () => {
     const text = elements.resultCiphertext.textContent;
-    if (!text || text === '(kosong)' || text === '-') {
-      showAlert('Belum ada output untuk diunduh.');
+    if (!text || text === '(empty)' || text === '-') {
+      setStatus('No output available to download.', 'error');
       return;
     }
     const filename = `${state.selectedCipher}_output.txt`;
     downloadFile(text, filename, 'text/plain');
+    setStatus(`Downloaded output as "${filename}".`, 'success');
   });
 
   elements.btnDownloadProcessedFile.addEventListener('click', () => {
     if (!state.processedFileBytes) {
-      showAlert('Belum ada file yang berhasil diproses.');
+      setStatus('No processed file available for download.', 'error');
       return;
     }
     const filename = elements.customOutputFilename.value.trim() || state.outputFilename || 'processed_file.dat';
     downloadFile(state.processedFileBytes, filename);
+    setStatus(`Downloaded processed file as "${filename}".`, 'success');
   });
 }
 
-// Initialize on DOMContentLoaded
+// Initialize on DOM ready
 window.addEventListener('DOMContentLoaded', () => {
   setCipher('vigenere');
   setInputType('text');
   updateHillMatrixStatus();
   setupEventListeners();
-  elements.textCharCount.textContent = `${elements.textInput.value.length} karakter`;
+  elements.textCharCount.textContent = `${elements.textInput.value.length} chars`;
 });
